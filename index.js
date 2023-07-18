@@ -39,18 +39,53 @@ async function run() {
         await client.connect();
         const usersCollection = client.db('users').collection('info')
 
-        app.post('/user/:email', async (req, res) => {
+        // session token genrate 
+        const session = info => {
+            const token = jwt.sign({ email: info.email, name: info.name }, process.env.SECRET_KEY, { expiresIn: '2h' })
+            return token
+        }
+
+
+
+        // register user || to add new user data 
+        app.post('/register/:email', async (req, res) => {
             const info = req.body
+            console.log(info);
             const email = req.params.email
             const query = { email }
             const finded = await usersCollection.findOne(query)
             if (!finded) {
                 const result = await usersCollection.insertOne(info)
+
                 res.send(result)
             } else {
                 console.log('user alredy exist ');
+                res.send({ error: true, message: 'User already exist , Please login ' })
             }
 
+        })
+
+
+        // login user 
+        app.post('/login/:email', async (req, res) => {
+            const body = req.body
+            const email = req.params.email
+            const password = body.password
+            const query = { email }
+            const findUser = await usersCollection.findOne(query)
+            if (findUser) {
+                if (findUser.password === password) {
+                    const token = session(body)
+                    console.log(token);
+                    res.send({token})
+                } else {
+                    console.log('Password does not match !!');
+                    res.send({ error: true, message: 'Password does not match !! ' })
+                }
+            } else {
+                console.log('user not found');
+                res.send({ error: true, message: 'User not found !! ' })
+            }
         })
 
 
