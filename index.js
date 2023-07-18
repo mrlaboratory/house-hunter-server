@@ -118,11 +118,25 @@ async function run() {
 
 
         // add new house data 
-        app.post('/addnewhouse/:email', async (req, res) => {
+        app.post('/addnewhouse/', async (req, res) => {
             const houseInfo = req.body
             const result = await housesCollection.insertOne(houseInfo)
             res.send(result)
         })
+
+        // get all houses 
+        app.get('/houses', async(req,res)=> {
+            const result = await housesCollection.find({}).toArray()
+            res.send(result)
+         })
+
+         // houses by email 
+         app.get('/housesByEmail/:email', async(req,res)=> {
+            const email = req.params.email 
+            const query = {ownerEmail:email}
+            const result = await housesCollection.find(query)
+            res.send(result)
+         })
 
 
 
