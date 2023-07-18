@@ -38,6 +38,7 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
         const usersCollection = client.db('users').collection('info')
+        const housesCollection = client.db('houses').collection('data')
 
         // session token genrate 
         const session = info => {
@@ -49,7 +50,7 @@ async function run() {
             const authorization = req.headers.authorization
             if (!authorization) {
                 return res.status(401).send({ error: true, message: 'unauthorized access' })
-                
+
             }
             const token = authorization.split(' ')[1]
             jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
@@ -73,9 +74,9 @@ async function run() {
             const finded = await usersCollection.findOne(query)
             if (!finded) {
                 const result = await usersCollection.insertOne(info)
-                if(result.insertedId){
+                if (result.insertedId) {
                     const token = session(info)
-                    res.send({token})
+                    res.send({ token })
                 }
             } else {
                 console.log('user alredy exist ');
@@ -95,7 +96,7 @@ async function run() {
             if (findUser) {
                 if (findUser.password === password) {
                     const token = session(body)
-                    res.send({token})
+                    res.send({ token })
                 } else {
                     console.log('Password does not match !!');
                     res.send({ error: true, message: 'Password does not match !! ' })
@@ -108,13 +109,20 @@ async function run() {
 
 
         // get user data 
-        app.get('/userData', verifyJWT, async (req,res)=> {
-            const email = req.decoded.email 
-            const query = {email}
+        app.get('/userData', verifyJWT, async (req, res) => {
+            const email = req.decoded.email
+            const query = { email }
             const result = await usersCollection.findOne(query)
             res.send(result)
         })
 
+
+        // add new house data 
+        app.post('/addnewhouse/:email', async (req, res) => {
+            const houseInfo = req.body
+            const result = await housesCollection.insertOne(houseInfo)
+            res.send(result)
+        })
 
 
 
