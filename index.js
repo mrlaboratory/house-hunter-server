@@ -21,7 +21,7 @@ app.use(morgan('dev'))
 
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.xd2w32h.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -118,25 +118,45 @@ async function run() {
 
 
         // add new house data 
-        app.post('/addnewhouse/', async (req, res) => {
+        app.post('/addnewhouse', async (req, res) => {
             const houseInfo = req.body
             const result = await housesCollection.insertOne(houseInfo)
             res.send(result)
         })
 
         // get all houses 
-        app.get('/houses', async(req,res)=> {
+        app.get('/houses', async (req, res) => {
             const result = await housesCollection.find({}).toArray()
             res.send(result)
-         })
+        })
 
-         // houses by email 
-         app.get('/housesByEmail/:email', async(req,res)=> {
-            const email = req.params.email 
-            const query = {ownerEmail:email}
-            const result = await housesCollection.find(query)
+        // houses by email 
+        app.get('/housesByEmail/:email', async (req, res) => {
+            const email = req.params.email
+            const query = { ownerEmail: email }
+            const result = await housesCollection.find(query).toArray()
             res.send(result)
-         })
+        })
+
+        // delete house
+        // to do use jwt 
+        app.delete('/housedelete/:id', async (req, res) => {
+            const id = req.params.id
+            const query = {_id:new ObjectId(id)}
+            const result = await housesCollection.deleteOne(query)
+            res.send(result)
+        })
+
+        app.patch('/houseupdate/:id', async (req,res)=> {
+            const id = req.params.id 
+            const query = {_id: new ObjectId(id)}
+            const info = req.body 
+            const newDoc = {
+                $set:{...info}
+            }
+            const result = await housesCollection.updateOne(query,newDoc)
+            res.send(result)
+        })
 
 
 
