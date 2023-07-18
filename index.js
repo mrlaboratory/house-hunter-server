@@ -45,7 +45,24 @@ async function run() {
             return token
         }
 
-
+        const verifyJWT = (req, res, next) => {
+            const authorization = req.headers.authorization
+            if (!authorization) {
+                return res.status(401).send({ error: true, message: 'unauthorized access' })
+                
+            }
+            const token = authorization.split(' ')[1]
+            jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
+                if (err) {
+                    return res
+                        .status(401)
+                        .send({ error: true, message: 'Unauthorized access' })
+                }
+                console.log(decoded);
+                req.decoded = decoded
+                next()
+            })
+        }
 
         // register user || to add new user data 
         app.post('/register/:email', async (req, res) => {
@@ -56,8 +73,10 @@ async function run() {
             const finded = await usersCollection.findOne(query)
             if (!finded) {
                 const result = await usersCollection.insertOne(info)
-
-                res.send(result)
+                if(result.insertedId){
+                    const token = session(info)
+                    res.send({token})
+                }
             } else {
                 console.log('user alredy exist ');
                 res.send({ error: true, message: 'User already exist , Please login ' })
@@ -76,7 +95,6 @@ async function run() {
             if (findUser) {
                 if (findUser.password === password) {
                     const token = session(body)
-                    console.log(token);
                     res.send({token})
                 } else {
                     console.log('Password does not match !!');
@@ -86,6 +104,15 @@ async function run() {
                 console.log('user not found');
                 res.send({ error: true, message: 'User not found !! ' })
             }
+        })
+
+
+        // get user data 
+        app.get('/userData', verifyJWT, async (req,res)=> {
+            const email = req.decoded.email 
+            const query = {email}
+            const result = await usersCollection.findOne(query)
+            res.send(result)
         })
 
 
