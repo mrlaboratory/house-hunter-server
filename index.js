@@ -68,145 +68,190 @@ async function run() {
 
         // register user || to add new user data 
         app.post('/register/:email', async (req, res) => {
-            const info = req.body
-            console.log(info);
-            const email = req.params.email
-            const query = { email }
-            const finded = await usersCollection.findOne(query)
-            if (!finded) {
-                const result = await usersCollection.insertOne(info)
-                if (result.insertedId) {
-                    const token = session(info)
-                    res.send({ token })
+            try {
+                const info = req.body
+                console.log(info);
+                const email = req.params.email
+                const query = { email }
+                const finded = await usersCollection.findOne(query)
+                if (!finded) {
+                    const result = await usersCollection.insertOne(info)
+                    if (result.insertedId) {
+                        const token = session(info)
+                        res.send({ token })
+                    }
+                } else {
+                    console.log('user alredy exist ');
+                    res.send({ error: true, message: 'User already exist , Please login ' })
                 }
-            } else {
-                console.log('user alredy exist ');
-                res.send({ error: true, message: 'User already exist , Please login ' })
-            }
 
+            } catch (error) {
+                console.log(error);
+            }
         })
 
 
         // login user 
         app.post('/login/:email', async (req, res) => {
-            const body = req.body
-            const email = req.params.email
-            const password = body.password
-            const query = { email }
-            const findUser = await usersCollection.findOne(query)
-            if (findUser) {
-                if (findUser.password === password) {
-                    const token = session(body)
-                    res.send({ token })
+            try {
+                const body = req.body
+                const email = req.params.email
+                const password = body.password
+                const query = { email }
+                const findUser = await usersCollection.findOne(query)
+                if (findUser) {
+                    if (findUser.password === password) {
+                        const token = session(body)
+                        res.send({ token })
+                    } else {
+                        console.log('Password does not match !!');
+                        res.send({ error: true, message: 'Password does not match !! ' })
+                    }
                 } else {
-                    console.log('Password does not match !!');
-                    res.send({ error: true, message: 'Password does not match !! ' })
+                    console.log('user not found');
+                    res.send({ error: true, message: 'User not found !! ' })
                 }
-            } else {
-                console.log('user not found');
-                res.send({ error: true, message: 'User not found !! ' })
+            } catch (error) {
+                console.log(error);
             }
         })
 
 
         // get user data 
         app.get('/userData', verifyJWT, async (req, res) => {
-            const email = req.decoded.email
-            const query = { email }
-            const result = await usersCollection.findOne(query)
-            res.send(result)
+            try {
+                const email = req.decoded.email
+                const query = { email }
+                const result = await usersCollection.findOne(query)
+                res.send(result)
+            } catch (error) {
+                console.log(error);
+            }
         })
 
 
         // add new house data 
         app.post('/addnewhouse', async (req, res) => {
-            const houseInfo = req.body
-            const result = await housesCollection.insertOne(houseInfo)
-            res.send(result)
+            try {
+                const houseInfo = req.body
+                const result = await housesCollection.insertOne(houseInfo)
+                res.send(result)
+
+            } catch (error) {
+                console.log(error);
+            }
         })
 
         // get all houses 
         app.get('/houses', async (req, res) => {
-            const text = req.query.text || ''
-            const city = req.query.city || ''
+            try {
+                const text = req.query.text || ''
+                const city = req.query.city || ''
 
-            const rentValue = parseInt(req?.query?.rent) || 10000
-            const bedroomsValue = parseInt(req?.query?.bedrooms) || 50
-            const bathroomsValue = parseInt(req?.query?.bathrooms) || 50
-            const sizeValue = parseInt(req?.query?.size) || 50
-            const regex = new RegExp(text, 'i');
+                const rentValue = parseInt(req?.query?.rent) || 10000
+                const bedroomsValue = parseInt(req?.query?.bedrooms) || 50
+                const bathroomsValue = parseInt(req?.query?.bathrooms) || 50
+                const sizeValue = parseInt(req?.query?.size) || 50
+                const regex = new RegExp(text, 'i');
 
 
-            const result = await housesCollection.find({ name: regex }).toArray()
-            const result2 = result?.filter((d) => {
-                return d.rent <= rentValue && d.bedrooms <= bedroomsValue && d.bathrooms <= bathroomsValue && d.romeSize <= sizeValue && d.city.toLowerCase().includes(city.toLowerCase())
-            })
+                const result = await housesCollection.find({ name: regex }).toArray()
+                const result2 = result?.filter((d) => {
+                    return d.rent <= rentValue && d.bedrooms <= bedroomsValue && d.bathrooms <= bathroomsValue && d.romeSize <= sizeValue && d.city.toLowerCase().includes(city.toLowerCase())
+                })
 
-            res.send(result2)
+                res.send(result2)
+            } catch (error) {
+                console.log(error);
+            }
         })
 
         // houses by email 
         app.get('/housesByEmail/:email', async (req, res) => {
-            const email = req.params.email
-            const query = { ownerEmail: email }
-            const result = await housesCollection.find(query).toArray()
-            res.send(result)
+            try {
+                const email = req.params.email
+                const query = { ownerEmail: email }
+                const result = await housesCollection.find(query).toArray()
+                res.send(result)
+            } catch (error) {
+                console.log(error);
+            }
         })
 
         // delete house
         app.delete('/housedelete/:id', verifyJWT, async (req, res) => {
-            const id = req.params.id
-            const query = { _id: new ObjectId(id) }
-            const result = await housesCollection.deleteOne(query)
-            res.send(result)
+            try {
+                const id = req.params.id
+                const query = { _id: new ObjectId(id) }
+                const result = await housesCollection.deleteOne(query)
+                res.send(result)
+            } catch (error) {
+                console.log(error);
+            }
         })
 
 
         // update hosue
         app.patch('/houseupdate/:id', verifyJWT, async (req, res) => {
-            const id = req.params.id
-            const query = { _id: new ObjectId(id) }
-            const info = req.body
-            const newDoc = {
-                $set: { ...info }
+            try {
+                const id = req.params.id
+                const query = { _id: new ObjectId(id) }
+                const info = req.body
+                const newDoc = {
+                    $set: { ...info }
+                }
+                const result = await housesCollection.updateOne(query, newDoc)
+                res.send(result)
+            } catch (error) {
+                console.log(error);
             }
-            const result = await housesCollection.updateOne(query, newDoc)
-            res.send(result)
         })
 
 
         // total house 
         app.get('/allhouse', async (req, res) => {
-            const page = parseInt(req?.query?.page) || 0
-            const limit = parseInt(req?.query?.limit) || 10
-            const skip = page * limit
-            const result = await housesCollection.find().skip(skip).limit(limit).toArray()
+            try {
+                const page = parseInt(req?.query?.page) || 0
+                const limit = parseInt(req?.query?.limit) || 10
+                const skip = page * limit
+                const result = await housesCollection.find().skip(skip).limit(limit).toArray()
 
-            res.send(result)
+                res.send(result)
+            } catch (error) {
+                console.log(error);
+            }
         })
 
 
         // all house 
         app.get('/totalhouses', async (req, res) => {
-            const result = await housesCollection.estimatedDocumentCount()
-            console.log(result);
-            res.send({ totalHouses: result })
+            try {
+                const result = await housesCollection.estimatedDocumentCount()
+                console.log(result);
+                res.send({ totalHouses: result })
+            } catch (error) {
+                console.log(error);
+            }
         })
 
 
         // for house booking 
         app.post('/bookinghouse', verifyJWT, async (req, res) => {
-            const info = req.body
-            const bookedBy = req.body.bookedBy
-            const query = { bookedBy }
-            console.log(query);
-            const ress = await bookingCollection.find(query).toArray()
-            console.log(ress?.length);
-            if (ress?.length > 1) {
-                res.send({ error: true, message: 'Maximum booking limit exceeded, A renter only booked 2 houses !!' })
-            } else {
-                const result = await bookingCollection.insertOne(info)
-                res.send(result)
+            try {
+                const info = req.body
+                const bookedBy = req.body.bookedBy
+                const query = { bookedBy }
+                console.log(query);
+                const ress = await bookingCollection.find(query).toArray()
+                console.log(ress?.length);
+                if (ress?.length > 1) {
+                    res.send({ error: true, message: 'Maximum booking limit exceeded, A renter only booked 2 houses !!' })
+                } else {
+                    const result = await bookingCollection.insertOne(info)
+                    res.send(result)
+                }
+            } catch (error) {
+                console.log(error);
             }
 
         })
@@ -214,31 +259,44 @@ async function run() {
 
         // for booked data 
         app.get('/bookedByUser/:email', async (req, res) => {
-            const bookedBy = req.params.email 
-            const query = {bookedBy}
-            const bookedData = await bookingCollection.find(query).toArray()
-            const houses = await housesCollection.find().toArray()
-            res.send(bookedData)
+            try {
+                const bookedBy = req.params.email
+                const query = { bookedBy }
+                const bookedData = await bookingCollection.find(query).toArray()
+                const houses = await housesCollection.find().toArray()
+                res.send(bookedData)
+            } catch (error) {
+                console.log(error);
+            }
         })
         // owner booked houses
         app.get('/bookedByOwner/:email', async (req, res) => {
-            const ownerEmail = req.params.email 
-            const query = {ownerEmail}
-            console.log(query);
-            const bookedData = await bookingCollection.find(query).toArray()
-            console.log(bookedData);
-            const houses = await housesCollection.find().toArray()
-            res.send(bookedData)
+            try {
+                const ownerEmail = req.params.email
+                const query = { ownerEmail }
+                console.log(query);
+                const bookedData = await bookingCollection.find(query).toArray()
+                console.log(bookedData);
+                const houses = await housesCollection.find().toArray()
+                res.send(bookedData)
+            } catch (error) {
+                console.log(error);
+            }
         })
 
-        app.delete('/removebooking/:id',async(req,res) => {
-            const id = req.params.id 
-            const query = {_id: new ObjectId(id)}
-            const result = await bookingCollection.deleteOne(query)
-            res.send(result)
+        app.delete('/removebooking/:id', async (req, res) => {
+            try {
+                const id = req.params.id
+                const query = { _id: new ObjectId(id) }
+                const result = await bookingCollection.deleteOne(query)
+                res.send(result)
+
+            } catch (error) {
+                console.log(error);
+            }
         })
 
-        
+
 
 
 
