@@ -126,8 +126,26 @@ async function run() {
 
         // get all houses 
         app.get('/houses', async (req, res) => {
-            const result = await housesCollection.find({}).toArray()
-            res.send(result)
+            const text = req.query.text || ''
+            const city = req.query.city || ''
+
+            const rentValue = parseInt(req?.query?.rent) || 10000
+            const bedroomsValue = parseInt(req?.query?.bedrooms) || 50
+            const bathroomsValue = parseInt(req?.query?.bathrooms) || 50
+            const sizeValue = parseInt(req?.query?.size) || 50
+            const regex = new RegExp(text, 'i');
+            console.log(regex);
+            const page = parseInt(req?.query?.page) || 0
+            const limit = parseInt(req?.query?.limit) || 10
+            const skip = page * limit
+
+            const result = await housesCollection.find({ name: regex }).toArray()
+            console.log('bathroomsValue', bathroomsValue);
+            const result2 = result?.filter((d) => {
+                return d.rent <= rentValue && d.bedrooms <= bedroomsValue && d.bathrooms <= bathroomsValue && d.romeSize <= sizeValue && d.city.toLowerCase().includes(city.toLowerCase())
+            })
+
+            res.send(result2)
         })
 
         // houses by email 
@@ -139,22 +157,23 @@ async function run() {
         })
 
         // delete house
-        // to do use jwt 
-        app.delete('/housedelete/:id', async (req, res) => {
+        app.delete('/housedelete/:id', verifyJWT, async (req, res) => {
             const id = req.params.id
-            const query = {_id:new ObjectId(id)}
+            const query = { _id: new ObjectId(id) }
             const result = await housesCollection.deleteOne(query)
             res.send(result)
         })
 
-        app.patch('/houseupdate/:id', async (req,res)=> {
-            const id = req.params.id 
-            const query = {_id: new ObjectId(id)}
-            const info = req.body 
+
+        // update hosue
+        app.patch('/houseupdate/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+            const info = req.body
             const newDoc = {
-                $set:{...info}
+                $set: { ...info }
             }
-            const result = await housesCollection.updateOne(query,newDoc)
+            const result = await housesCollection.updateOne(query, newDoc)
             res.send(result)
         })
 
