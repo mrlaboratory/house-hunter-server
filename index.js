@@ -220,6 +220,16 @@ async function run() {
             const houses = await housesCollection.find().toArray()
             res.send(bookedData)
         })
+        // owner booked houses
+        app.get('/bookedByOwner/:email', async (req, res) => {
+            const ownerEmail = req.params.email 
+            const query = {ownerEmail}
+            console.log(query);
+            const bookedData = await bookingCollection.find(query).toArray()
+            console.log(bookedData);
+            const houses = await housesCollection.find().toArray()
+            res.send(bookedData)
+        })
 
         app.delete('/removebooking/:id',async(req,res) => {
             const id = req.params.id 
