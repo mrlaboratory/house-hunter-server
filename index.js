@@ -7,7 +7,7 @@ const morgan = require('morgan')
 
 const jwt = require('jsonwebtoken')
 
-
+// to do , use try catch for error handle 
 
 // middleware 
 const corsOptions = {
@@ -134,13 +134,9 @@ async function run() {
             const bathroomsValue = parseInt(req?.query?.bathrooms) || 50
             const sizeValue = parseInt(req?.query?.size) || 50
             const regex = new RegExp(text, 'i');
-            console.log(regex);
-            const page = parseInt(req?.query?.page) || 0
-            const limit = parseInt(req?.query?.limit) || 10
-            const skip = page * limit
+
 
             const result = await housesCollection.find({ name: regex }).toArray()
-            console.log('bathroomsValue', bathroomsValue);
             const result2 = result?.filter((d) => {
                 return d.rent <= rentValue && d.bedrooms <= bedroomsValue && d.bathrooms <= bathroomsValue && d.romeSize <= sizeValue && d.city.toLowerCase().includes(city.toLowerCase())
             })
@@ -178,6 +174,23 @@ async function run() {
         })
 
 
+        // total house 
+        app.get('/allhouse', async (req, res) => {
+            const page = parseInt(req?.query?.page) || 0
+            const limit = parseInt(req?.query?.limit) || 10
+            const skip = page * limit
+            const result = await housesCollection.find().skip(skip).limit(limit).toArray()
+            console.log(result);
+            res.send(result)
+        })
+
+
+        // all house 
+        app.get('/totalhouses', async (req, res) => {
+            const result = await housesCollection.estimatedDocumentCount()
+            console.log(result);
+            res.send({ totalHouses: result })
+        })
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
