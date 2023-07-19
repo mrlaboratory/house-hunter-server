@@ -39,6 +39,7 @@ async function run() {
         await client.connect();
         const usersCollection = client.db('users').collection('info')
         const housesCollection = client.db('houses').collection('data')
+        const bookingCollection = client.db('booking').collection('data')
 
         // session token genrate 
         const session = info => {
@@ -180,7 +181,7 @@ async function run() {
             const limit = parseInt(req?.query?.limit) || 10
             const skip = page * limit
             const result = await housesCollection.find().skip(skip).limit(limit).toArray()
-            console.log(result);
+
             res.send(result)
         })
 
@@ -190,6 +191,24 @@ async function run() {
             const result = await housesCollection.estimatedDocumentCount()
             console.log(result);
             res.send({ totalHouses: result })
+        })
+
+
+        // for house booking 
+        app.post('/bookinghouse', verifyJWT, async (req, res) => {
+            const info = req.body
+            const bookedBy = req.body.bookedBy
+            const query = { bookedBy }
+            console.log(query);
+            const ress = await bookingCollection.find(query).toArray()
+            console.log(ress?.length);
+            if (ress?.length > 1) {
+                res.send({ error: true, message: 'Maximum booking limit exceeded, A renter only booked 2 houses !!' })
+            } else {
+                const result = await bookingCollection.insertOne(info)
+                res.send(result)
+            }
+
         })
 
         // Send a ping to confirm a successful connection
